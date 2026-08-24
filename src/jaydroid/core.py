@@ -2,13 +2,32 @@ r"""
 Utilities for sending Android Debug Bridge (ADB) input commands.
 
 The connected Android device must have developer options and USB debugging
-enabled. Each operation returns the :class:`subprocess.CompletedProcess`
+enabled. Most operations return the :class:`subprocess.CompletedProcess`
 instance produced by :func:`subprocess.run`, allowing callers to inspect the
 command's output and return code.
 """
 
 
 import subprocess
+
+def adb(*args, **kwargs):
+    """Run an ADB command and return its completed-process result.
+
+    Args:
+        *args (str): Arguments passed to the ``adb`` executable.
+        **kwargs: Additional keyword arguments passed to
+            :func:`subprocess.run`. Output is captured and decoded as text by
+            default.
+
+    Returns:
+        subprocess.CompletedProcess: The result of the ADB command.
+    """
+    kwargs.setdefault('capture_output', True)
+    kwargs.setdefault('text', True)
+    return subprocess.run(
+        ['adb', *args],
+        **kwargs
+    )
 
 
 class Button:
@@ -28,11 +47,7 @@ class Button:
             subprocess.CompletedProcess: The result of the ADB command.
         """
 
-        return subprocess.run(
-            ['adb', 'shell', 'input', 'keyevent', '26'],
-            capture_output=True,
-            text=True
-        )
+        return adb('shell', 'input', 'keyevent', '26')
 
     def volume_up(self):
         """
@@ -41,11 +56,7 @@ class Button:
         Returns:
             subprocess.CompletedProcess: The result of the ADB command.
         """
-        return subprocess.run(
-            ['adb', 'shell', 'input', 'keyevent', '24'],
-            capture_output=True,
-            text=True
-        )
+        return adb('shell', 'input', 'keyevent', '24')
 
     def volume_down(self):
         """
@@ -54,11 +65,7 @@ class Button:
         Returns:
             subprocess.CompletedProcess: The result of the ADB command.
         """
-        return subprocess.run(
-            ['adb', 'shell', 'input', 'keyevent', '25'],
-            capture_output=True,
-            text=True
-        )
+        return adb('shell', 'input', 'keyevent', '25')
 
     def home(self):
         """
@@ -67,11 +74,7 @@ class Button:
         Returns:
             subprocess.CompletedProcess: The result of the ADB command.
         """
-        return subprocess.run(
-            ['adb', 'shell', 'input', 'keyevent', '3'],
-            capture_output=True,
-            text=True
-        )   
+        return adb('shell', 'input', 'keyevent', '3')
 
     def back(self):
         """
@@ -80,11 +83,7 @@ class Button:
         Returns:
             subprocess.CompletedProcess: The result of the ADB command.
         """
-        return subprocess.run(
-            ['adb', 'shell', 'input', 'keyevent', '4'],
-            capture_output=True,
-            text=True
-        )
+        return adb('shell', 'input', 'keyevent', '4')
     
     def recent_apps(self):
         """
@@ -93,11 +92,7 @@ class Button:
         Returns:
             subprocess.CompletedProcess: The result of the ADB command.
         """
-        return subprocess.run(
-            ['adb', 'shell', 'input', 'keyevent', '187'],
-            capture_output=True,
-            text=True
-        )
+        return adb('shell', 'input', 'keyevent', '187')
 
     def menu(self):
         """
@@ -108,11 +103,7 @@ class Button:
         Returns:
             subprocess.CompletedProcess: The result of the ADB command.
         """
-        return subprocess.run(
-            ['adb', 'shell', 'input', 'keyevent', '82'],
-            capture_output=True,
-            text=True
-        )
+        return adb('shell', 'input', 'keyevent', '82')
 
     def wake(self):
         """
@@ -123,11 +114,7 @@ class Button:
         Returns:
             subprocess.CompletedProcess: The result of the ADB command.
         """
-        return subprocess.run(
-            ['adb', 'shell', 'input', 'keyevent', '224'],
-            capture_output=True,
-            text=True
-        )
+        return adb('shell', 'input', 'keyevent', '224')
 
     def sleep(self):
         """
@@ -136,11 +123,7 @@ class Button:
         Returns:
             subprocess.CompletedProcess: The result of the ADB command.
         """
-        return subprocess.run(
-            ['adb', 'shell', 'input', 'keyevent', '223'],
-            capture_output=True,
-            text=True
-        )
+        return adb('shell', 'input', 'keyevent', '223')
 
 
 class Screen:
@@ -157,11 +140,7 @@ class Screen:
             subprocess.CompletedProcess: The result of the ADB command.
         """
 
-        return subprocess.run(
-            ['adb', 'shell', 'input', 'keyevent', '120'],
-            capture_output=True,
-            text=True
-        )
+        return adb('shell', 'input', 'keyevent', '120')
 
 
     def screenshot(self, filename=None, pull=False):
@@ -184,19 +163,10 @@ class Screen:
             filename = 'screenshot.png'
         remote_path = f'/sdcard/{filename}'
 
-        res_capture = subprocess.run(
-            ['adb', 'shell', 'screencap', '-p', remote_path],
-            capture_output=True,
-            text=True
-        )
+        res_capture = adb('shell', 'screencap', '-p', remote_path)
 
         if pull:
-            res_pull = subprocess.run(
-                ['adb', 'pull', remote_path],
-                capture_output=True,
-                text=True,
-                check=True
-            )
+            res_pull = adb('pull', remote_path, check=True)
             return res_pull
 
         return res_capture
@@ -232,19 +202,12 @@ class Screen:
 
         remote_path = f'/sdcard/{filename}'
 
-        res_record = subprocess.run(
-            ['adb', 'shell', 'screenrecord', '--time-limit', str(duration), remote_path],
-            capture_output=True,
-            text=True,
+        res_record = adb(
+            'shell', 'screenrecord', '--time-limit', str(duration), remote_path
         )
 
         if pull:
-            res_pull = subprocess.run(
-                ['adb', 'pull', remote_path],
-                capture_output=True,
-                text=True,
-                check=True
-            )
+            res_pull = adb('pull', remote_path, check=True)
             return res_pull
 
         return res_record
