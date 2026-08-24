@@ -8,7 +8,24 @@ command's output and return code.
 """
 
 
-import subprocess
+import subprocess, time
+
+
+class Device:
+    """Store basic information about the connected Android device."""
+
+    def setup(self):
+        """Load and store the device display width and height."""
+        self.width, self.height = self.get_screen_size()
+
+    def get_screen_size(self):
+        """Return the connected device display size as ``(width, height)``."""
+        result = adb('shell', 'wm', 'size')
+        text, resolution = result.stdout.split(':')
+        resolution = resolution.strip()
+        width, height = resolution.split('x')
+        return int(width), int(height)
+
 
 def adb(*args, **kwargs):
     """Run an ADB command and return its completed-process result.
@@ -28,6 +45,9 @@ def adb(*args, **kwargs):
         ['adb', *args],
         **kwargs
     )
+
+
+
 
 
 class Button:
@@ -136,6 +156,8 @@ class Screen:
         This method does not save or pull an image file. Use :meth:`screenshot`
         to capture the screen to a file.
 
+        Note: this one is less universally reliable across OEM skins than just calling screenshot() directly
+
         Returns:
             subprocess.CompletedProcess: The result of the ADB command.
         """
@@ -195,7 +217,7 @@ class Screen:
         if not filename:
             filename = 'recording.mp4'
 
-        name, file_format = filename.split('.') 
+        name, file_format = filename.rsplit('.', 1)
         if file_format != 'mp4':
             return "File format unsupported."
 
@@ -212,4 +234,41 @@ class Screen:
 
         return res_record
 
+
+class Gesture:
+    """Gesture helpers for a connected Android device."""
+
+    def __init__(self, device):
+        """Create gesture helpers associated with ``device``."""
+        self.device = device
+        self.swipe = Gesture.Swipe(device)
+
+    class Swipe:
+        """Helpers for sending horizontal and vertical swipe gestures."""
+
+        def swipe(self, x1, y1, x2, y2):
+            """Swipe from ``(x1, y1)`` to ``(x2, y2)`` in screen pixels."""
+            return adb('shell', 'input', 'swipe', str(x1), str(y1), str(x2), str(y2))
+
+
+        def swipe_up(self):
+            """Swipe upward using the built-in screen coordinates."""
+            return adb('shell', 'input', 'swipe', '300', '1000', '300', '500')
+
+        def unlock(self):
+            """Attempt to unlock the device with an upward swipe."""
+            return self.swipe_up()
+
+        def swipe_down(self):
+            """Swipe downward using the built-in screen coordinates."""
+            return adb('shell', 'input', 'swipe', '300', '500', '300', '1000')
+
+
+        def swipe_right(self):
+            """Swipe right using the built-in screen coordinates."""
+            return adb('shell', 'input', 'swipe', '100', '640', '600', '640')
+
+        def swipe_left(self):
+            """Swipe left using the built-in screen coordinates."""
+            return adb('shell', 'input', 'swipe', '600', '640', '100', '640')
 
