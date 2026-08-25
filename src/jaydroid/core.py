@@ -12,16 +12,35 @@ import subprocess, time
 
 
 class Device:
-    """Store basic information about the connected Android device."""
+    """Store the connected device's display dimensions for gesture helpers.
+
+    Instantiating this class immediately queries ADB for the device's physical
+    display size and stores it in :attr:`width` and :attr:`height`.
+    """
+    def __init__(self):
+        """Create a device object and load its display dimensions."""
+        self.setup()
 
     def setup(self):
-        """Load and store the device display width and height."""
+        """Query ADB and store the device display width and height."""
         self.width, self.height = self.get_screen_size()
 
     def get_screen_size(self):
-        """Return the connected device display size as ``(width, height)``."""
+        """Return the physical display size as ``(width, height)``.
+
+        Raises:
+            RuntimeError: If ADB does not return a ``Physical size: WIDTHxHEIGHT``
+                line.
+        """
         result = adb('shell', 'wm', 'size')
-        text, resolution = result.stdout.split(':')
+        screen_info = result.stdout.splitlines()
+        for info in screen_info:
+            if info.startswith('Physical'):
+                screen = info
+                break
+        else:
+            raise RuntimeError('Connected device did not return a recognized resolution format. You can use swipe() to enter custom coordinates')
+        text, resolution = screen.split(':')
         resolution = resolution.strip()
         width, height = resolution.split('x')
         return int(width), int(height)
@@ -236,15 +255,27 @@ class Screen:
 
 
 class Gesture:
-    """Gesture helpers for a connected Android device."""
+    """Gesture helpers for a connected Android device.
+
+    Args:
+        device (Device): Device whose display dimensions are used for the
+            built-in directional gestures.
+    """
 
     def __init__(self, device):
         """Create gesture helpers associated with ``device``."""
         self.device = device
         self.swipe = Gesture.Swipe(device)
 
-    class Swipe:
-        """Helpers for sending horizontal and vertical swipe gestures."""
+    class Swipe():
+        """Helpers for sending coordinate-based swipe gestures.
+
+        Built-in directional gestures calculate their coordinates as a
+        percentage of the associated device's display dimensions.
+        """
+        def __init__(self, device):
+            """Create a swipe helper associated with ``device``."""
+            self.device = device
 
         def swipe(self, x1, y1, x2, y2):
             """Swipe from ``(x1, y1)`` to ``(x2, y2)`` in screen pixels."""
@@ -253,7 +284,10 @@ class Gesture:
 
         def swipe_up(self):
             """Swipe upward using the built-in screen coordinates."""
-            return adb('shell', 'input', 'swipe', '300', '1000', '300', '500')
+            x1 = int(self.device.width * 0.5)
+            y1 = int(self.device.height * 0.80)
+            y2 = int(self.device.height * 0.10)
+            return adb('shell', 'input', 'swipe', str(x1), str(y1), str(x1), str(y2))
 
         def unlock(self):
             """Attempt to unlock the device with an upward swipe."""
@@ -261,14 +295,24 @@ class Gesture:
 
         def swipe_down(self):
             """Swipe downward using the built-in screen coordinates."""
-            return adb('shell', 'input', 'swipe', '300', '500', '300', '1000')
+            x1 = int(self.device.width * 0.5)
+            y1 = int(self.device.height * 0.10)
+            y2 = int(self.device.height * 0.80)
+
+            return adb('shell', 'input', 'swipe', str(x1), str(y1), str(x1), str(y2))
 
 
         def swipe_right(self):
             """Swipe right using the built-in screen coordinates."""
-            return adb('shell', 'input', 'swipe', '100', '640', '600', '640')
+            x1 = int(self.device.width * 0.10)
+            y1 = int(self.device.height * 0.50)
+            x2 = int(self.device.width * 0.90)
+            return adb('shell', 'input', 'swipe', str(x1), str(y1), str(x2), str(y1))
 
         def swipe_left(self):
             """Swipe left using the built-in screen coordinates."""
-            return adb('shell', 'input', 'swipe', '600', '640', '100', '640')
+            x1 = int(self.device.width * 0.90)
+            y1 = int(self.device.height * 0.50)
+            x2 = int(self.device.width * 0.10)
+            return adb('shell', 'input', 'swipe', str(x1), str(y1), str(x2), str(y1))
 
