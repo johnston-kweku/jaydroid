@@ -9,21 +9,49 @@ command's output and return code.
 
 
 import subprocess, time
+from exceptions import DeviceNotFoundError, DeviceNotConnectedError
 
 
 class Device:
-    """Store the connected device's display dimensions for gesture helpers.
-
-    Instantiating this class immediately queries ADB for the device's physical
-    display size and stores it in :attr:`width` and :attr:`height`.
     """
+    Store the connected device's display dimensions for gesture helpers.
+    """
+
     def __init__(self):
-        """Create a device object and load its display dimensions."""
+        self._width = None
+        self._height = None
+
+    def connect(self):
+        result = adb('devices')
+        devices = result.stdout.splitlines()
+        header = devices.pop(0)
+        devices = [item for item in devices if item]
+        if not devices:
+            raise DeviceNotFoundError('Error: No device(s) connected')
+
         self.setup()
+
+
+    @property
+    def width(self):
+        """The connected device's display width in pixels."""
+        if self._width is not None:
+            return self._width
+        raise DeviceNotConnectedError('Error: No device/emulator connected. Did you forget to run connect()? See documentation')
+
+
+    @property
+    def height(self):
+        """The connected device's display height in pixels."""
+        if self._height is not None:
+            return self._height
+        raise DeviceNotConnectedError('Error: No device/emulator connected. Did you forget to run connect()? See documentation')
+
+
 
     def setup(self):
         """Query ADB and store the device display width and height."""
-        self.width, self.height = self.get_screen_size()
+        self._width, self._height = self.get_screen_size()
 
     def get_screen_size(self):
         """Return the physical display size as ``(width, height)``.
@@ -266,6 +294,7 @@ class Gesture:
         """Create gesture helpers associated with ``device``."""
         self.device = device
         self.swipe = Gesture.Swipe(device)
+        self.tap = Gesture.Tap(device)
 
     class Swipe():
         """Helpers for sending coordinate-based swipe gestures.
@@ -315,4 +344,37 @@ class Gesture:
             y1 = int(self.device.height * 0.50)
             x2 = int(self.device.width * 0.10)
             return adb('shell', 'input', 'swipe', str(x1), str(y1), str(x2), str(y1))
+
+    class Tap:
+        """Helpers for sending coordinate-based tap gestures.
+
+        Built-in directional gestures calculate their coordinates as a
+        percentage of the associated device's display dimensions.
+        """
+        def __init__(self, device):
+            """Create a tap helper associated with ``device``."""
+            self.device = device
+
+        def tap(self, x, y):
+            """Tap at ``(x, y)`` in screen pixels."""
+            return adb('shell', 'input', 'tap', str(x), str(y))
+
+        def double_tap(self, x, y):
+            """Double-tap at ``(x, y)`` in screen pixels."""
+            self.tap(x, y)
+            time.sleep(0.05)
+            return self.tap(x + 5, y + 5)
+
+        def longpress(self, x, y, duration=3000):
+            return adb('shell', 'input', 'swipe', str(x), str(y), str(x), str(y), str(duration))
+
+
+device = Device()
+button = Button()
+swipe = Gesture.Swipe(device=device)
+tap = Gesture.Tap(device=device)
+
+swipe.swipe_up()
+
+
 
