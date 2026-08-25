@@ -9,12 +9,16 @@ command's output and return code.
 
 
 import subprocess, time
-from exceptions import DeviceNotFoundError, DeviceNotConnectedError
+from .exceptions import DeviceNotFoundError, DeviceNotConnectedError
 
 
 class Device:
     """
-    Store the connected device's display dimensions for gesture helpers.
+    Manage connection state and display dimensions for an Android device.
+
+    Create a ``Device`` instance before using gesture helpers, then call
+    :meth:`connect` to verify that an ADB device is available and load its
+    display dimensions.
     """
 
     def __init__(self):
@@ -22,6 +26,12 @@ class Device:
         self._height = None
 
     def connect(self):
+        """Connect to the first available ADB device and load its display size.
+
+        Raises:
+            DeviceNotFoundError: If no device or emulator is available through
+                ADB.
+        """
         result = adb('devices')
         devices = result.stdout.splitlines()
         header = devices.pop(0)
@@ -34,7 +44,11 @@ class Device:
 
     @property
     def width(self):
-        """The connected device's display width in pixels."""
+        """The connected device's display width in pixels.
+
+        Raises:
+            DeviceNotConnectedError: If :meth:`connect` has not completed.
+        """
         if self._width is not None:
             return self._width
         raise DeviceNotConnectedError('Error: No device/emulator connected. Did you forget to run connect()? See documentation')
@@ -42,7 +56,11 @@ class Device:
 
     @property
     def height(self):
-        """The connected device's display height in pixels."""
+        """The connected device's display height in pixels.
+
+        Raises:
+            DeviceNotConnectedError: If :meth:`connect` has not completed.
+        """
         if self._height is not None:
             return self._height
         raise DeviceNotConnectedError('Error: No device/emulator connected. Did you forget to run connect()? See documentation')
@@ -50,7 +68,7 @@ class Device:
 
 
     def setup(self):
-        """Query ADB and store the device display width and height."""
+        """Refresh and store the device display width and height."""
         self._width, self._height = self.get_screen_size()
 
     def get_screen_size(self):
@@ -203,7 +221,9 @@ class Screen:
         This method does not save or pull an image file. Use :meth:`screenshot`
         to capture the screen to a file.
 
-        Note: this one is less universally reliable across OEM skins than just calling screenshot() directly
+        Note:
+            This key event is less universally reliable across OEM skins than
+            calling :meth:`screenshot` directly.
 
         Returns:
             subprocess.CompletedProcess: The result of the ADB command.
@@ -348,8 +368,7 @@ class Gesture:
     class Tap:
         """Helpers for sending coordinate-based tap gestures.
 
-        Built-in directional gestures calculate their coordinates as a
-        percentage of the associated device's display dimensions.
+        Tap coordinates are expressed in screen pixels.
         """
         def __init__(self, device):
             """Create a tap helper associated with ``device``."""
@@ -360,12 +379,13 @@ class Gesture:
             return adb('shell', 'input', 'tap', str(x), str(y))
 
         def double_tap(self, x, y):
-            """Double-tap at ``(x, y)`` in screen pixels."""
+            """Double-tap near ``(x, y)`` in screen pixels."""
             self.tap(x, y)
             time.sleep(0.05)
-            return self.tap(x + 5, y + 5)
+            return self.tap(x, y)
 
         def longpress(self, x, y, duration=3000):
+            """Press at ``(x, y)`` for ``duration`` milliseconds."""
             return adb('shell', 'input', 'swipe', str(x), str(y), str(x), str(y), str(duration))
 
 
@@ -374,7 +394,6 @@ button = Button()
 swipe = Gesture.Swipe(device=device)
 tap = Gesture.Tap(device=device)
 
-swipe.swipe_up()
 
 
-
+device.connect()

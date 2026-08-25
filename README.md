@@ -1,6 +1,6 @@
 # jaydroid
 
-`jaydroid` is a small Python wrapper around [Android Debug Bridge (ADB)](https://developer.android.com/tools/adb). It provides helpers for common device buttons, screenshots, screen recordings, display-size detection, and swipe gestures.
+`jaydroid` is a small Python wrapper around [Android Debug Bridge (ADB)](https://developer.android.com/tools/adb). It provides helpers for connecting to an Android device, reading display dimensions, sending button input, capturing the screen, and performing swipe and tap gestures.
 
 ## Requirements
 
@@ -29,6 +29,7 @@ python -m pip install -e .
 from jaydroid.core import Button, Device, Screen
 
 device = Device()
+device.connect()
 width, height = device.get_screen_size()
 print(f'Display: {width}x{height}')
 
@@ -45,12 +46,13 @@ ADB command results are returned as `subprocess.CompletedProcess` objects. Inspe
 
 ## Gestures
 
-Create a `Device` first. It queries the display size, which the built-in directional helpers use to calculate valid coordinates for that device.
+Create a `Device`, connect it to an available ADB device, and pass it to the gesture helpers. The directional helpers calculate coordinates from the connected display size.
 
 ```python
 from jaydroid.core import Device, Gesture
 
 device = Device()
+device.connect()
 swipe = Gesture.Swipe(device)
 swipe.swipe_left()
 swipe.swipe_right()
@@ -63,7 +65,9 @@ You can also create the top-level `Gesture` wrapper. Its `swipe` attribute is a 
 ```python
 from jaydroid.core import Device, Gesture
 
-gestures = Gesture(Device())
+device = Device()
+device.connect()
+gestures = Gesture(device)
 gestures.swipe.swipe_left()
 ```
 
@@ -72,7 +76,9 @@ Use `Swipe.swipe()` for custom coordinates. Coordinates are pixel values, with `
 ```python
 from jaydroid.core import Device, Gesture
 
-swipe = Gesture.Swipe(Device())
+device = Device()
+device.connect()
+swipe = Gesture.Swipe(device)
 swipe.swipe(600, 640, 100, 640)
 ```
 
@@ -81,6 +87,19 @@ The built-in helpers use these relative positions:
 - Left and right: 10% to 90% of the display width at 50% of its height
 - Up and down: 50% of the display width, from 80% to 10% of its height
 - `unlock()`: an upward swipe
+
+Tap gestures are available through `Gesture.Tap(device)`:
+
+```python
+from jaydroid.core import Device, Gesture
+
+device = Device()
+device.connect()
+tap = Gesture.Tap(device)
+tap.tap(360, 640)
+tap.double_tap(360, 640)
+tap.longpress(360, 640, duration=1000)
+```
 
 ## Available button helpers
 
@@ -94,9 +113,9 @@ The built-in helpers use these relative positions:
 
 ## Device information
 
-`Device()` queries `adb shell wm size` during initialization. Its `width` and `height` attributes contain the physical display dimensions. `get_screen_size()` can be called again to refresh the values through `setup()`.
+`Device()` starts disconnected. Call `connect()` to verify that an ADB device or emulator is available and load its display dimensions. Its `width` and `height` attributes contain the physical display dimensions. Call `setup()` to refresh those values.
 
-If the connected device does not return a line beginning with `Physical size:`, initialization raises `RuntimeError`. For unusual device output, use `Swipe.swipe()` with explicit coordinates.
+Accessing `width` or `height` before connecting raises `DeviceNotConnectedError`. If no device is available, `connect()` raises `DeviceNotFoundError`. If the device returns an unrecognized resolution format, `get_screen_size()` raises `RuntimeError`.
 
 ## License
 
