@@ -1,0 +1,147 @@
+from .utils import adb
+from .exceptions import DeviceNotFoundError, DeviceNotConnectedError
+
+class Device:
+    """
+    Manage connection state and display dimensions for an Android device.
+
+    Create a ``Device`` instance before using gesture helpers, then call
+    :meth:`connect` to verify that an ADB device is available and load its
+    display dimensions.
+
+    Device information helpers query the connected device through ADB and
+    raise ``DeviceNotConnectedError`` when a connection is required but absent.
+    """
+
+    def __init__(self):
+        self._width = None
+        self._height = None
+
+    def connect(self):
+        """Connect to the first available ADB device and load its display size.
+
+        Raises:
+            DeviceNotFoundError: If no device or emulator is available through
+                ADB.
+        """
+        result = adb('devices')
+        devices = result.stdout.splitlines()
+        header = devices.pop(0)
+        devices = [item for item in devices if item]
+        if not devices:
+            raise DeviceNotFoundError('Error: No device(s) connected')
+
+        self.setup()
+
+
+    @property
+    def width(self):
+        """The connected device's display width in pixels.
+
+        Raises:
+            DeviceNotConnectedError: If :meth:`connect` has not completed.
+        """
+        if self._width is not None:
+            return self._width
+        raise DeviceNotConnectedError('Error: No device/emulator connected. Did you forget to run connect()? See documentation')
+
+
+    @property
+    def height(self):
+        """The connected device's display height in pixels.
+
+        Raises:
+            DeviceNotConnectedError: If :meth:`connect` has not completed.
+        """
+        if self._height is not None:
+            return self._height
+        raise DeviceNotConnectedError('Error: No device/emulator connected. Did you forget to run connect()? See documentation')
+
+
+
+    def setup(self):
+        """Refresh and store the device display width and height.
+
+        Raises:
+            RuntimeError: If the device does not return a recognized display
+                resolution.
+        """
+        self._width, self._height = self.get_screen_size()
+
+    def get_screen_size(self):
+        """Return the physical display size as ``(width, height)``.
+
+        Raises:
+            RuntimeError: If ADB does not return a ``Physical size: WIDTHxHEIGHT``
+                line.
+        """
+        result = adb('shell', 'wm', 'size')
+        screen_info = result.stdout.splitlines()
+        for info in screen_info:
+            if info.startswith('Physical'):
+                screen = info
+                break
+        else:
+            raise RuntimeError('Connected device did not return a recognized resolution format.\
+                                You can use swipe() to enter custom coordinates')
+        text, resolution = screen.split(':')
+        resolution = resolution.strip()
+        width, height = resolution.split('x')
+        return int(width), int(height)
+
+
+    def is_connected(self):
+        """Return whether an Android device or emulator is connected through ADB.
+
+        Returns:
+            bool: ``True`` when at least one device is connected; otherwise,
+                ``False``.
+        """
+        result = adb('devices')
+        devices = result.stdout.splitlines()
+        header = devices.pop(0)
+        devices = [item for item in devices if item]
+        return bool(devices)
+
+    def get_android_version(self):
+        """Return the Android release version of the connected device.
+
+        Returns:
+            str: The Android release version reported by ADB.
+
+        Raises:
+            DeviceNotConnectedError: If no device or emulator is connected.
+        """
+        if self.is_connected():
+            result =  adb('shell', 'getprop', 'ro.build.version.release')
+            android_version = result.stdout.strip()
+            return android_version
+        error = 'No device was detected. Connect an android device and try again.'
+        raise DeviceNotConnectedError(error)
+
+    def battery_info(self):
+        """Return battery information reported by the connected device.
+
+        Returns:
+            dict: Battery properties parsed from ``adb shell dumpsys battery``.
+
+        Raises:
+            DeviceNotConnectedError: If no device or emulator is connected.
+        """
+        if self.is_connected():
+            result = adb('shell', 'dumpsys', 'battery')
+            info = result.stdout
+            info = info.splitlines()
+            info.pop(0)
+            info = [line.strip() for line in info]
+
+            battery_information = {}
+            for line in info:
+                key, value = line.split(':')
+                key, value = key.strip(), value.strip()
+
+                battery_information[key] = value
+
+            return battery_information
+        error = 'No device was detected. Connect an android device and try again.'
+        raise DeviceNotConnectedError(error)

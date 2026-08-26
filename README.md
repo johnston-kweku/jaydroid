@@ -131,6 +131,18 @@ tap.longpress(360, 640, duration=1000, delay=0.5)
 
 `Device()` starts disconnected. Call `connect()` to verify that an ADB device or emulator is available and load its display dimensions. Its `width` and `height` attributes contain the physical display dimensions. Call `setup()` to refresh those values.
 
+Use `is_connected()` to check the current ADB connection. When a device is connected, `get_android_version()` returns its Android release version and `battery_info()` returns battery properties parsed from `adb shell dumpsys battery`:
+
+```python
+from jaydroid.core import Device
+
+device = Device()
+device.connect()
+print(device.is_connected())
+print(device.get_android_version())
+print(device.battery_info())
+```
+
 Accessing `width` or `height` before connecting raises `DeviceNotConnectedError`. If no device is available, `connect()` raises `DeviceNotFoundError`. If the device returns an unrecognized resolution format, `get_screen_size()` raises `RuntimeError`.
 
 ## License

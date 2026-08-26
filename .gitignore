@@ -1,1 +1,3 @@
 jaydroid-env/
+
+tests/test_core.py
