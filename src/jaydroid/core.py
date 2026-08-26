@@ -9,7 +9,7 @@ command's output and return code.
 
 
 import subprocess, time
-from .exceptions import DeviceNotFoundError, DeviceNotConnectedError
+from .exceptions import DeviceNotFoundError, DeviceNotConnectedError, AdbCommandError
 
 
 class Device:
@@ -106,10 +106,15 @@ def adb(*args, **kwargs):
     """
     kwargs.setdefault('capture_output', True)
     kwargs.setdefault('text', True)
-    return subprocess.run(
+    result =  subprocess.run(
         ['adb', *args],
         **kwargs
     )
+
+    if result.returncode != 0:
+        raise AdbCommandError(result.stderr)
+
+    return result
 
 
 
@@ -396,4 +401,3 @@ tap = Gesture.Tap(device=device)
 
 
 
-device.connect()

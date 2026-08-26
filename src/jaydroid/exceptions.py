@@ -3,3 +3,6 @@ class DeviceNotFoundError(Exception):
 
 class DeviceNotConnectedError(Exception):
     pass
+
+class AdbCommandError(Exception):
+    pass
