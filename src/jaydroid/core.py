@@ -85,12 +85,69 @@ class Device:
                 screen = info
                 break
         else:
-            raise RuntimeError('Connected device did not return a recognized resolution format. You can use swipe() to enter custom coordinates')
+            raise RuntimeError('Connected device did not return a recognized resolution format.\
+                                You can use swipe() to enter custom coordinates')
         text, resolution = screen.split(':')
         resolution = resolution.strip()
         width, height = resolution.split('x')
         return int(width), int(height)
 
+
+    def is_connected(self):
+        """Return whether an Android device or emulator is connected through ADB.
+
+        Returns:
+            bool: ``True`` when at least one device is connected; otherwise,
+                ``False``.
+        """
+        result = adb('devices')
+        devices = result.stdout.splitlines()
+        header = devices.pop(0)
+        devices = [item for item in devices if item]
+        return bool(devices)
+
+    def get_android_version(self):
+        """Return the Android release version of the connected device.
+
+        Returns:
+            str: The Android release version reported by ADB.
+
+        Raises:
+            DeviceNotConnectedError: If no device or emulator is connected.
+        """
+        if self.is_connected():
+            result =  adb('shell', 'getprop', 'ro.build.version.release')
+            android_version = result.stdout.strip()
+            return android_version
+        error = 'No device was detected. Connect an android device and try again.'
+        raise DeviceNotConnectedError(error)
+
+    def battery_info(self):
+        """Return battery information reported by the connected device.
+
+        Returns:
+            dict: Battery properties parsed from ``adb shell dumpsys battery``.
+
+        Raises:
+            DeviceNotConnectedError: If no device or emulator is connected.
+        """
+        if self.is_connected():
+            result = adb('shell', 'dumpsys', 'battery')
+            info = result.stdout
+            info = info.splitlines()
+            info.pop(0)
+            info = [line.strip() for line in info]
+
+            battery_information = {}
+            for line in info:
+                key, value = line.split(':')
+                key, value = key.strip(), value.strip()
+
+                battery_information[key] = value
+
+            return battery_information
+        error = 'No device was detected. Connect an android device and try again.'
+        raise DeviceNotConnectedError(error)
 
 def adb(*args, **kwargs):
     """Run an ADB command and return its completed-process result.
@@ -100,12 +157,16 @@ def adb(*args, **kwargs):
         **kwargs: Additional keyword arguments passed to
             :func:`subprocess.run`. Output is captured and decoded as text by
             default.
+        delay (int | float): Seconds to wait after the command completes.
+            Defaults to ``0``.
 
     Returns:
         subprocess.CompletedProcess: The result of the ADB command.
     """
     kwargs.setdefault('capture_output', True)
     kwargs.setdefault('text', True)
+    delay_value = kwargs.pop('delay', 0)
+    
     result =  subprocess.run(
         ['adb', *args],
         **kwargs
@@ -113,7 +174,7 @@ def adb(*args, **kwargs):
 
     if result.returncode != 0:
         raise AdbCommandError(result.stderr)
-
+    time.sleep(delay_value)
     return result
 
 
@@ -126,8 +187,11 @@ class Button:
 
     ADB must be installed and available on ``PATH``, and a device or emulator
     must be connected before calling these methods.
+
+    Each button method accepts ``delay`` in seconds and waits after its ADB
+    action completes. The default delay is ``0``.
     """
-    def power(self):
+    def power(self, delay=0):
         """
         Toggle the device's screen with a power-button press.
 
@@ -135,56 +199,60 @@ class Button:
 
         Returns:
             subprocess.CompletedProcess: The result of the ADB command.
+
+        Args:
+            delay (int | float): Seconds to wait after the key event completes.
+                Defaults to ``0``.
         """
 
-        return adb('shell', 'input', 'keyevent', '26')
+        return adb('shell', 'input', 'keyevent', '26', delay=delay)
 
-    def volume_up(self):
+    def volume_up(self, delay=0):
         """
         Increase the device's system volume by one default increment.
 
         Returns:
             subprocess.CompletedProcess: The result of the ADB command.
         """
-        return adb('shell', 'input', 'keyevent', '24')
+        return adb('shell', 'input', 'keyevent', '24', delay=delay)
 
-    def volume_down(self):
+    def volume_down(self, delay=0):
         """
         Decrease the device's system volume by one default increment.
 
         Returns:
             subprocess.CompletedProcess: The result of the ADB command.
         """
-        return adb('shell', 'input', 'keyevent', '25')
+        return adb('shell', 'input', 'keyevent', '25', delay=delay)
 
-    def home(self):
+    def home(self, delay=0):
         """
         Navigate to the device home screen.
 
         Returns:
             subprocess.CompletedProcess: The result of the ADB command.
         """
-        return adb('shell', 'input', 'keyevent', '3')
+        return adb('shell', 'input', 'keyevent', '3', delay=delay)
 
-    def back(self):
+    def back(self, delay=0):
         """
         Navigate back one step in the current Android interface.
 
         Returns:
             subprocess.CompletedProcess: The result of the ADB command.
         """
-        return adb('shell', 'input', 'keyevent', '4')
+        return adb('shell', 'input', 'keyevent', '4', delay=delay)
     
-    def recent_apps(self):
+    def recent_apps(self, delay=0):
         """
         Open the Android recent-apps view.
 
         Returns:
             subprocess.CompletedProcess: The result of the ADB command.
         """
-        return adb('shell', 'input', 'keyevent', '187')
+        return adb('shell', 'input', 'keyevent', '187', delay=delay)
 
-    def menu(self):
+    def menu(self, delay=0):
         """
         Send the Android menu-button key event.
 
@@ -193,9 +261,9 @@ class Button:
         Returns:
             subprocess.CompletedProcess: The result of the ADB command.
         """
-        return adb('shell', 'input', 'keyevent', '82')
+        return adb('shell', 'input', 'keyevent', '82', delay=delay)
 
-    def wake(self):
+    def wake(self, delay=0):
         """
         Wake the device's screen if it is off.
 
@@ -204,22 +272,27 @@ class Button:
         Returns:
             subprocess.CompletedProcess: The result of the ADB command.
         """
-        return adb('shell', 'input', 'keyevent', '224')
+        return adb('shell', 'input', 'keyevent', '224', delay=delay)
 
-    def sleep(self):
+    def sleep(self, delay=0):
         """
         Put the device's screen to sleep.
 
         Returns:
             subprocess.CompletedProcess: The result of the ADB command.
         """
-        return adb('shell', 'input', 'keyevent', '223')
+        return adb('shell', 'input', 'keyevent', '223', delay=delay)
 
 
 class Screen:
-    """Methods for capturing screenshots and recording the device screen."""
+    """Methods for capturing screenshots and recording the device screen.
 
-    def capture(self):
+    Each method accepts ``delay`` in seconds and waits after its ADB action
+    completes. For methods that run multiple commands, the delay is applied
+    after each command. The default delay is ``0``.
+    """
+
+    def capture(self, delay=0):
         """
         Send the Android screenshot key event.
 
@@ -232,12 +305,16 @@ class Screen:
 
         Returns:
             subprocess.CompletedProcess: The result of the ADB command.
+
+        Args:
+            delay (int | float): Seconds to wait after the capture completes.
+                Defaults to ``0``.
         """
 
-        return adb('shell', 'input', 'keyevent', '120')
+        return adb('shell', 'input', 'keyevent', '120', delay=delay)
 
 
-    def screenshot(self, filename=None, pull=False):
+    def screenshot(self, filename=None, pull=False, delay=0):
         """
         Save a screenshot on the connected device.
 
@@ -247,6 +324,8 @@ class Screen:
                 ``/sdcard/``.
             pull (bool): If ``True``, copy the screenshot to the current local
                 directory after capturing it. Defaults to ``False``.
+            delay (int | float): Seconds to wait after each ADB command.
+                Defaults to ``0``.
 
         Returns:
             subprocess.CompletedProcess: The result of ``adb pull`` when
@@ -257,16 +336,16 @@ class Screen:
             filename = 'screenshot.png'
         remote_path = f'/sdcard/{filename}'
 
-        res_capture = adb('shell', 'screencap', '-p', remote_path)
+        res_capture = adb('shell', 'screencap', '-p', remote_path, delay=delay)
 
         if pull:
-            res_pull = adb('pull', remote_path, check=True)
+            res_pull = adb('pull', remote_path, check=True, delay=delay)
             return res_pull
 
         return res_capture
 
 
-    def screenrecord(self, filename=None, pull=False, duration=10):
+    def screenrecord(self, filename=None, pull=False, duration=10, delay=0):
         """
         Record the device screen to an MP4 file.
 
@@ -278,6 +357,8 @@ class Screen:
                 directory after recording it. Defaults to ``False``.
             duration (int | float): Maximum recording duration in seconds.
                 Defaults to ``10``.
+            delay (int | float): Seconds to wait after each ADB command.
+                Defaults to ``0``.
 
         Returns:
             subprocess.CompletedProcess: The result of ``adb pull`` when
@@ -297,11 +378,12 @@ class Screen:
         remote_path = f'/sdcard/{filename}'
 
         res_record = adb(
-            'shell', 'screenrecord', '--time-limit', str(duration), remote_path
+            'shell', 'screenrecord', '--time-limit', str(duration), remote_path,
+            delay=delay
         )
 
         if pull:
-            res_pull = adb('pull', remote_path, check=True)
+            res_pull = adb('pull', remote_path, check=True, delay=delay)
             return res_pull
 
         return res_record
@@ -313,6 +395,9 @@ class Gesture:
     Args:
         device (Device): Device whose display dimensions are used for the
             built-in directional gestures.
+
+    Gesture methods accept ``delay`` in seconds and wait after the ADB action
+    completes. The default delay is ``0``.
     """
 
     def __init__(self, device):
@@ -331,44 +416,49 @@ class Gesture:
             """Create a swipe helper associated with ``device``."""
             self.device = device
 
-        def swipe(self, x1, y1, x2, y2):
-            """Swipe from ``(x1, y1)`` to ``(x2, y2)`` in screen pixels."""
-            return adb('shell', 'input', 'swipe', str(x1), str(y1), str(x2), str(y2))
+        def swipe(self, x1, y1, x2, y2, delay=0):
+            """Swipe from ``(x1, y1)`` to ``(x2, y2)`` in screen pixels.
+
+            Args:
+                delay (int | float): Seconds to wait after the swipe completes.
+                    Defaults to ``0``.
+            """
+            return adb('shell', 'input', 'swipe', str(x1), str(y1), str(x2), str(y2), delay=delay)
 
 
-        def swipe_up(self):
+        def swipe_up(self, delay=0):
             """Swipe upward using the built-in screen coordinates."""
             x1 = int(self.device.width * 0.5)
             y1 = int(self.device.height * 0.80)
             y2 = int(self.device.height * 0.10)
-            return adb('shell', 'input', 'swipe', str(x1), str(y1), str(x1), str(y2))
+            return adb('shell', 'input', 'swipe', str(x1), str(y1), str(x1), str(y2), delay=delay)
 
-        def unlock(self):
+        def unlock(self, delay=0):
             """Attempt to unlock the device with an upward swipe."""
-            return self.swipe_up()
+            return self.swipe_up(delay=delay)
 
-        def swipe_down(self):
+        def swipe_down(self, delay=0):
             """Swipe downward using the built-in screen coordinates."""
             x1 = int(self.device.width * 0.5)
             y1 = int(self.device.height * 0.10)
             y2 = int(self.device.height * 0.80)
 
-            return adb('shell', 'input', 'swipe', str(x1), str(y1), str(x1), str(y2))
+            return adb('shell', 'input', 'swipe', str(x1), str(y1), str(x1), str(y2), delay=delay)
 
 
-        def swipe_right(self):
+        def swipe_right(self, delay=0):
             """Swipe right using the built-in screen coordinates."""
             x1 = int(self.device.width * 0.10)
             y1 = int(self.device.height * 0.50)
             x2 = int(self.device.width * 0.90)
-            return adb('shell', 'input', 'swipe', str(x1), str(y1), str(x2), str(y1))
+            return adb('shell', 'input', 'swipe', str(x1), str(y1), str(x2), str(y1), delay=delay)
 
-        def swipe_left(self):
+        def swipe_left(self, delay=0):
             """Swipe left using the built-in screen coordinates."""
             x1 = int(self.device.width * 0.90)
             y1 = int(self.device.height * 0.50)
             x2 = int(self.device.width * 0.10)
-            return adb('shell', 'input', 'swipe', str(x1), str(y1), str(x2), str(y1))
+            return adb('shell', 'input', 'swipe', str(x1), str(y1), str(x2), str(y1), delay=delay)
 
     class Tap:
         """Helpers for sending coordinate-based tap gestures.
@@ -379,19 +469,34 @@ class Gesture:
             """Create a tap helper associated with ``device``."""
             self.device = device
 
-        def tap(self, x, y):
-            """Tap at ``(x, y)`` in screen pixels."""
-            return adb('shell', 'input', 'tap', str(x), str(y))
+        def tap(self, x, y, delay=0):
+            """Tap at ``(x, y)`` in screen pixels.
 
-        def double_tap(self, x, y):
-            """Double-tap near ``(x, y)`` in screen pixels."""
-            self.tap(x, y)
+            Args:
+                delay (int | float): Seconds to wait after the tap completes.
+                    Defaults to ``0``.
+            """
+            return adb('shell', 'input', 'tap', str(x), str(y), delay=delay)
+
+        def double_tap(self, x, y, delay=0):
+            """Double-tap near ``(x, y)`` in screen pixels.
+
+            Args:
+                delay (int | float): Seconds to wait after each tap completes.
+                    Defaults to ``0``.
+            """
+            self.tap(x, y, delay=delay)
             time.sleep(0.05)
-            return self.tap(x, y)
+            return self.tap(x, y, delay=delay)
 
-        def longpress(self, x, y, duration=3000):
-            """Press at ``(x, y)`` for ``duration`` milliseconds."""
-            return adb('shell', 'input', 'swipe', str(x), str(y), str(x), str(y), str(duration))
+        def longpress(self, x, y, duration=3000, delay=0):
+            """Press at ``(x, y)`` for ``duration`` milliseconds.
+
+            Args:
+                delay (int | float): Seconds to wait after the long press
+                    completes. Defaults to ``0``.
+            """
+            return adb('shell', 'input', 'swipe', str(x), str(y), str(x), str(y), str(duration), delay=delay)
 
 
 device = Device()

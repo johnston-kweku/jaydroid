@@ -34,15 +34,31 @@ width, height = device.get_screen_size()
 print(f'Display: {width}x{height}')
 
 buttons = Button()
-buttons.wake()
-buttons.home()
+buttons.wake(delay=1)
+buttons.home(delay=0.5)
 
 screen = Screen()
-screen.screenshot(filename='screen.png', pull=True)
-screen.screenrecord(filename='recording.mp4', pull=True, duration=10)
+screen.screenshot(filename='screen.png', pull=True, delay=1)
+screen.screenrecord(filename='recording.mp4', pull=True, duration=10, delay=1)
 ```
 
 ADB command results are returned as `subprocess.CompletedProcess` objects. Inspect `returncode`, `stdout`, and `stderr` to check the result. Pull operations use `check=True` and raise `subprocess.CalledProcessError` when ADB reports an error.
+
+## Delays
+
+All `Button`, `Screen`, and `Gesture` methods accept an optional `delay` argument in seconds. The default is `0`, so commands run without an additional pause. The delay is applied after the ADB action completes:
+
+```python
+from jaydroid.core import Button, Gesture
+
+buttons = Button()
+buttons.wake(delay=1)
+
+gestures = Gesture(device)
+gestures.tap.double_tap(360, 640, delay=0.5)
+```
+
+For compound methods, such as `double_tap()` and screen capture methods with `pull=True`, the delay is applied after each underlying ADB command. `delay` may be an integer or floating-point number.
 
 ## Gestures
 
@@ -56,8 +72,8 @@ device.connect()
 swipe = Gesture.Swipe(device)
 swipe.swipe_left()
 swipe.swipe_right()
-swipe.swipe_up()
-swipe.swipe_down()
+swipe.swipe_up(delay=0.5)
+swipe.swipe_down(delay=0.5)
 ```
 
 You can also create the top-level `Gesture` wrapper. Its `swipe` attribute is a `Swipe` helper:
@@ -68,7 +84,7 @@ from jaydroid.core import Device, Gesture
 device = Device()
 device.connect()
 gestures = Gesture(device)
-gestures.swipe.swipe_left()
+gestures.swipe.swipe_left(delay=0.5)
 ```
 
 Use `Swipe.swipe()` for custom coordinates. Coordinates are pixel values, with `(0, 0)` at the top-left of the display:
@@ -79,7 +95,7 @@ from jaydroid.core import Device, Gesture
 device = Device()
 device.connect()
 swipe = Gesture.Swipe(device)
-swipe.swipe(600, 640, 100, 640)
+swipe.swipe(600, 640, 100, 640, delay=0.5)
 ```
 
 The built-in helpers use these relative positions:
@@ -96,20 +112,20 @@ from jaydroid.core import Device, Gesture
 device = Device()
 device.connect()
 tap = Gesture.Tap(device)
-tap.tap(360, 640)
-tap.double_tap(360, 640)
-tap.longpress(360, 640, duration=1000)
+tap.tap(360, 640, delay=0.5)
+tap.double_tap(360, 640, delay=0.5)
+tap.longpress(360, 640, duration=1000, delay=0.5)
 ```
 
 ## Available button helpers
 
-`Button` provides `power()`, `volume_up()`, `volume_down()`, `home()`, `back()`, `recent_apps()`, `menu()`, `wake()`, and `sleep()`.
+`Button` provides `power()`, `volume_up()`, `volume_down()`, `home()`, `back()`, `recent_apps()`, `menu()`, `wake()`, and `sleep()`. Each accepts `delay=0`.
 
 ## Screen helpers
 
-- `Screen.capture()` sends the Android screenshot key event.
-- `Screen.screenshot()` saves a PNG under `/sdcard/` and can optionally pull it locally.
-- `Screen.screenrecord()` records an MP4 under `/sdcard/` and can optionally pull it locally.
+- `Screen.capture(delay=0)` sends the Android screenshot key event.
+- `Screen.screenshot(filename=None, pull=False, delay=0)` saves a PNG under `/sdcard/` and can optionally pull it locally.
+- `Screen.screenrecord(filename=None, pull=False, duration=10, delay=0)` records an MP4 under `/sdcard/` and can optionally pull it locally.
 
 ## Device information
 
