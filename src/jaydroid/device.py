@@ -147,6 +147,18 @@ class Device:
         raise DeviceNotConnectedError(error)
 
     def wifi_status(self):
+        """Return the Wi‑Fi state for the connected device.
+
+        Queries Android settings via ADB and maps the numeric state to a human-
+        readable string.
+
+        Returns:
+            str: One of ``'On'``, ``'Off'``, or ``'Unknown'`` when the setting
+            cannot be interpreted.
+
+        Raises:
+            DeviceNotConnectedError: If no device or emulator is connected.
+        """
         if self.is_connected():
             result = adb('shell', 'settings', 'get', 'global', 'wifi_on')
             values = {
@@ -161,6 +173,18 @@ class Device:
 
 
     def get_installed_apps(self):
+        """Return a list of third‑party packages installed on the device.
+
+        Uses ``pm list packages -3`` to list installed packages and extracts the
+        package names.
+
+        Returns:
+            list[str]: A list of package names installed by the user (third-
+            party apps).
+
+        Raises:
+            DeviceNotConnectedError: If no device or emulator is connected.
+        """
         if self.is_connected():
             result = adb('shell', 'pm', 'list', 'packages', '-3')
             app_list = result.stdout
@@ -176,6 +200,18 @@ class Device:
 
 
     def storage_space_info(self):
+        """Return filesystem usage information for the device data partition.
+
+        Calls ``df -h /data`` on the device and returns a dictionary mapping the
+        reported header fields (e.g. ``Filesystem``, ``Size``, ``Used``,
+        ``Available``, ``Use%``, ``Mounted on``) to their corresponding values.
+
+        Returns:
+            dict: A mapping of column name to value for the ``/data`` mount.
+
+        Raises:
+            DeviceNotConnectedError: If no device or emulator is connected.
+        """
         if self.is_connected():
             result = adb('shell', 'df', '-h', '/data')
             storage_info = result.stdout
