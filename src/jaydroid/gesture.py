@@ -47,7 +47,7 @@ class Gesture:
                     Defaults to ``0``.
             """
             x1 = int(self.device.width * 0.5)
-            y1 = int(self.device.height * 0.80)
+            y1 = int(self.device.height * 0.60)
             y2 = int(self.device.height * 0.10)
             return adb('shell', 'input', 'swipe', str(x1), str(y1), str(x1), str(y2), delay=delay)
 
@@ -83,7 +83,7 @@ class Gesture:
             """
             x1 = int(self.device.width * 0.10)
             y1 = int(self.device.height * 0.50)
-            x2 = int(self.device.width * 0.90)
+            x2 = int(self.device.width * 0.70)
             return adb('shell', 'input', 'swipe', str(x1), str(y1), str(x2), str(y1), delay=delay)
 
         def swipe_left(self, delay=0):
@@ -93,7 +93,7 @@ class Gesture:
                 delay (int | float): Seconds to wait after the swipe completes.
                     Defaults to ``0``.
             """
-            x1 = int(self.device.width * 0.90)
+            x1 = int(self.device.width * 0.70)
             y1 = int(self.device.height * 0.50)
             x2 = int(self.device.width * 0.10)
             return adb('shell', 'input', 'swipe', str(x1), str(y1), str(x2), str(y1), delay=delay)

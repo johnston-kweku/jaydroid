@@ -1,6 +1,8 @@
 # jaydroid
 
-`jaydroid` is a small Python wrapper around [Android Debug Bridge (ADB)](https://developer.android.com/tools/adb). It provides helpers for connecting to an Android device, reading display dimensions, sending button input, capturing the screen, and performing swipe and tap gestures.
+`jaydroid` is a small Python wrapper around [Android Debug Bridge (ADB)](https://developer.android.com/tools/adb). It provides helpers for connecting to an Android device, reading display dimensions and device info, sending button input, capturing the screen, and performing swipe and tap gestures.
+
+This is my first Python package, built as a way to learn how to design, structure, and publish one from scratch. I'm documenting the build process — bugs, refactors, and design decisions — as a video series. Expect it to keep growing.
 
 ## Requirements
 
@@ -17,133 +19,150 @@ adb devices
 
 ## Installation
 
-From the project directory, install the package in editable mode:
+```bash
+pip install jaydroid
+```
+
+For local development, from the project directory:
 
 ```bash
 python -m pip install -e .
 ```
 
-## Usage
+## Quick start
+
+`jaydroid` exposes ready-to-use instances, so there's no setup required beyond connecting your device:
 
 ```python
-from jaydroid.core import Button, Device, Screen
+from jaydroid import device, button, swipe, tap
 
-device = Device()
 device.connect()
-width, height = device.get_screen_size()
-print(f'Display: {width}x{height}')
 
-buttons = Button()
-buttons.wake(delay=1)
-buttons.home(delay=0.5)
-
-screen = Screen()
-screen.screenshot(filename='screen.png', pull=True, delay=1)
-screen.screenrecord(filename='recording.mp4', pull=True, duration=10, delay=1)
+button.wake(delay=1)
+swipe.swipe_up()
+tap.tap(360, 640)
 ```
 
-ADB command results are returned as `subprocess.CompletedProcess` objects. Inspect `returncode`, `stdout`, and `stderr` to check the result. Pull operations use `check=True` and raise `subprocess.CalledProcessError` when ADB reports an error.
+`device.connect()` checks that a device or emulator is actually reachable over ADB and loads its display dimensions. It's the one required step before using anything that depends on screen size (like the directional swipe helpers).
 
 ## Delays
 
-All `Button`, `Screen`, and `Gesture` methods accept an optional `delay` argument in seconds. The default is `0`, so commands run without an additional pause. The delay is applied after the ADB action completes:
+Every `Button`, `Screen`, `Swipe`, and `Tap` method accepts an optional `delay` argument, in seconds (default `0`). The delay runs *after* the action completes successfully — "do this, then wait" — so it's useful for giving the device a moment to catch up before your next command fires:
 
 ```python
-from jaydroid.core import Button, Gesture
-
-buttons = Button()
-buttons.wake(delay=1)
-
-gestures = Gesture(device)
-gestures.tap.double_tap(360, 640, delay=0.5)
+button.wake(delay=1)
+swipe.swipe_up(delay=0.5)
 ```
 
-For compound methods, such as `double_tap()` and screen capture methods with `pull=True`, the delay is applied after each underlying ADB command. `delay` may be an integer or floating-point number.
+If a command fails, the delay is skipped — you'll see the error immediately rather than waiting first.
 
 ## Gestures
 
-Create a `Device`, connect it to an available ADB device, and pass it to the gesture helpers. The directional helpers calculate coordinates from the connected display size.
+### Swipe
 
 ```python
-from jaydroid.core import Device, Gesture
+from jaydroid import swipe
 
-device = Device()
-device.connect()
-swipe = Gesture.Swipe(device)
+swipe.swipe_up()
+swipe.swipe_down()
 swipe.swipe_left()
 swipe.swipe_right()
-swipe.swipe_up(delay=0.5)
-swipe.swipe_down(delay=0.5)
+swipe.unlock()  # alias for swipe_up()
 ```
 
-You can also create the top-level `Gesture` wrapper. Its `swipe` attribute is a `Swipe` helper:
+Directional swipes are calculated as a percentage of the connected device's display size, so they scale across different screens rather than relying on hardcoded pixels:
+
+- Left and right: 10% to 90% of display width, at 50% of height
+- Up and down: 50% of display width, from 80% to 10% of height
+
+For custom coordinates, use `swipe.swipe(x1, y1, x2, y2)`:
 
 ```python
-from jaydroid.core import Device, Gesture
-
-device = Device()
-device.connect()
-gestures = Gesture(device)
-gestures.swipe.swipe_left(delay=0.5)
-```
-
-Use `Swipe.swipe()` for custom coordinates. Coordinates are pixel values, with `(0, 0)` at the top-left of the display:
-
-```python
-from jaydroid.core import Device, Gesture
-
-device = Device()
-device.connect()
-swipe = Gesture.Swipe(device)
 swipe.swipe(600, 640, 100, 640, delay=0.5)
 ```
 
-The built-in helpers use these relative positions:
-
-- Left and right: 10% to 90% of the display width at 50% of its height
-- Up and down: 50% of the display width, from 80% to 10% of its height
-- `unlock()`: an upward swipe
-
-Tap gestures are available through `Gesture.Tap(device)`:
+### Tap
 
 ```python
-from jaydroid.core import Device, Gesture
+from jaydroid import tap
 
-device = Device()
-device.connect()
-tap = Gesture.Tap(device)
-tap.tap(360, 640, delay=0.5)
-tap.double_tap(360, 640, delay=0.5)
-tap.longpress(360, 640, duration=1000, delay=0.5)
+tap.tap(360, 640)
+tap.double_tap(360, 640)
+tap.longpress(360, 640, duration=1000)
 ```
 
-## Available button helpers
+## Buttons
 
-`Button` provides `power()`, `volume_up()`, `volume_down()`, `home()`, `back()`, `recent_apps()`, `menu()`, `wake()`, and `sleep()`. Each accepts `delay=0`.
+```python
+from jaydroid import button
 
-## Screen helpers
+button.power()
+button.wake()
+button.sleep()
+button.home()
+button.back()
+button.recent_apps()
+button.menu()
+button.volume_up()
+button.volume_down()
+```
 
-- `Screen.capture(delay=0)` sends the Android screenshot key event.
-- `Screen.screenshot(filename=None, pull=False, delay=0)` saves a PNG under `/sdcard/` and can optionally pull it locally.
-- `Screen.screenrecord(filename=None, pull=False, duration=10, delay=0)` records an MP4 under `/sdcard/` and can optionally pull it locally.
+Each accepts `delay=0`.
+
+## Screen
+
+```python
+from jaydroid.screen import Screen
+
+screen = Screen()
+screen.capture()
+screen.screenshot(filename='screen.png', pull=True)
+screen.screenrecord(filename='recording.mp4', pull=True, duration=10)
+```
+
+`screenshot()` and `screenrecord()` save to `/sdcard/` on the device by default, and can optionally pull the file to your local directory with `pull=True`.
 
 ## Device information
 
-`Device()` starts disconnected. Call `connect()` to verify that an ADB device or emulator is available and load its display dimensions. Its `width` and `height` attributes contain the physical display dimensions. Call `setup()` to refresh those values.
-
-Use `is_connected()` to check the current ADB connection. When a device is connected, `get_android_version()` returns its Android release version and `battery_info()` returns battery properties parsed from `adb shell dumpsys battery`:
-
 ```python
-from jaydroid.core import Device
+from jaydroid import device
 
-device = Device()
 device.connect()
+print(device.width, device.height)
 print(device.is_connected())
 print(device.get_android_version())
 print(device.battery_info())
 ```
 
-Accessing `width` or `height` before connecting raises `DeviceNotConnectedError`. If no device is available, `connect()` raises `DeviceNotFoundError`. If the device returns an unrecognized resolution format, `get_screen_size()` raises `RuntimeError`.
+- `width` and `height` are only available after `connect()` — accessing them beforehand raises `DeviceNotConnectedError`.
+- `is_connected()`, `get_android_version()`, and `battery_info()` check the ADB connection live each time they're called, so they don't require `connect()` to have been run first.
+- `battery_info()` returns a dictionary parsed from `adb shell dumpsys battery`. Core fields (`level`, `status`, `health`, `voltage`, `temperature`, `technology`, and the `*_powered` flags) are consistently present across devices, but the full set of keys can vary by manufacturer, since some OEMs include additional proprietary fields.
+
+## Errors
+
+`jaydroid` raises specific exceptions instead of generic ones, so you can catch exactly what went wrong:
+
+- `DeviceNotFoundError` — raised by `connect()` when no device or emulator is reachable over ADB.
+- `DeviceNotConnectedError` — raised when accessing `width`/`height` before `connect()` has been called.
+- `AdbCommandError` — raised when an ADB command itself fails (e.g. the device disconnects mid-session). Includes ADB's own error output.
+
+```python
+from jaydroid import device
+from jaydroid.exceptions import DeviceNotFoundError
+
+try:
+    device.connect()
+except DeviceNotFoundError:
+    print("No device connected — plug one in and try again.")
+```
+
+## Roadmap
+
+Planned additions include WiFi status, installed app listing, and more device/system information. This package is under active development.
+
+## Author
+
+Built by Johnston Kweku Abubakar ([@johnston-kweku](https://github.com/johnston-kweku)) — this is my first Python package, built while learning to design, structure, and publish one from scratch.
 
 ## License
 

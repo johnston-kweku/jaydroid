@@ -133,7 +133,7 @@ class Device:
             info = result.stdout
             info = info.splitlines()
             info.pop(0)
-            info = [line.strip() for line in info]
+            info = [line.strip() for line in info if line.count(':') == 1]
 
             battery_information = {}
             for line in info:
