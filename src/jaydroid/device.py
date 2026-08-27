@@ -26,7 +26,7 @@ class Device:
         """
         result = adb('devices')
         devices = result.stdout.splitlines()
-        header = devices.pop(0)
+        _ = devices.pop(0)
         devices = [item for item in devices if item]
         if not devices:
             raise DeviceNotFoundError('Error: No device(s) connected')
@@ -84,7 +84,7 @@ class Device:
         else:
             raise RuntimeError('Connected device did not return a recognized resolution format.\
                                 You can use swipe() to enter custom coordinates')
-        text, resolution = screen.split(':')
+        _, resolution = screen.split(':')
         resolution = resolution.strip()
         width, height = resolution.split('x')
         return int(width), int(height)
@@ -145,3 +145,31 @@ class Device:
             return battery_information
         error = 'No device was detected. Connect an android device and try again.'
         raise DeviceNotConnectedError(error)
+
+    def wifi_status(self):
+        if self.is_connected():
+            result = adb('shell', 'settings', 'get', 'global', 'wifi_on')
+            values = {
+                '0' : 'Off',
+                '1' : 'On'
+            }
+            status_code = result.stdout.strip()
+
+            return values.get(status_code, 'Unknown')
+        raise DeviceNotConnectedError('No device was detected. Connect an android device and try again.')
+        
+
+
+    def get_installed_apps(self):
+        if self.is_connected():
+            result = adb('shell', 'pm', 'list', 'packages', '-3')
+            app_list = result.stdout
+            packages = app_list.splitlines()
+
+            installed_apps = []
+            for package in packages:
+                _, app_name = package.split(':')
+                installed_apps.append(app_name)
+
+            return installed_apps
+        raise DeviceNotConnectedError('No device was detected. Connect an android and try again.')

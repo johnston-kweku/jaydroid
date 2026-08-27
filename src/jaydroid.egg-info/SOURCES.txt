@@ -2,8 +2,13 @@ LICENSE
 README.md
 pyproject.toml
 src/jaydroid/__init__.py
+src/jaydroid/button.py
 src/jaydroid/core.py
+src/jaydroid/device.py
 src/jaydroid/exceptions.py
+src/jaydroid/gesture.py
+src/jaydroid/screen.py
+src/jaydroid/utils.py
 src/jaydroid.egg-info/PKG-INFO
 src/jaydroid.egg-info/SOURCES.txt
 src/jaydroid.egg-info/dependency_links.txt
