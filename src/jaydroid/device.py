@@ -173,3 +173,17 @@ class Device:
 
             return installed_apps
         raise DeviceNotConnectedError('No device was detected. Connect an android and try again.')
+
+
+    def storage_space_info(self):
+        if self.is_connected():
+            result = adb('shell', 'df', '-h', '/data')
+            storage_info = result.stdout
+            info = storage_info.splitlines()
+            header = info[0]
+            header = header.split()
+            data = info[1]
+            data = data.split()
+            storage_dict = dict(zip(header, data))
+            return storage_dict
+        raise DeviceNotConnectedError('No device was detected. Connect an android and try again.')
