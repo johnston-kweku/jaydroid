@@ -240,6 +240,19 @@ class Device:
         raise DeviceNotConnectedError('No device was detected. Connect an android and try again.')
 
     def get_device_ip(self):
+        """Return the device's local Wi-Fi IP address.
+
+        Queries the device's routing table via ADB to extract the IP address
+        assigned to the Wi-Fi interface (wlan0).
+
+        Returns:
+            str: The device's local Wi-Fi IP address.
+
+        Raises:
+            DeviceNotConnectedError: If no device or emulator is connected.
+            WifiNotConnectedError: If Wi-Fi is not currently enabled on the
+                device.
+        """
         if self.is_connected():
             if self.wifi_status() == 'On':
                 result = adb('shell', 'ip', 'route')

@@ -132,11 +132,28 @@ print(device.width, device.height)
 print(device.is_connected())
 print(device.get_android_version())
 print(device.battery_info())
+print(device.get_device_model())
+print(device.get_device_ip())
+print(device.wifi_status())
+print(device.get_installed_apps())
+print(device.storage_space_info())
+device.reboot()
 ```
 
+**Display dimensions:**
 - `width` and `height` are only available after `connect()` — accessing them beforehand raises `DeviceNotConnectedError`.
-- `is_connected()`, `get_android_version()`, and `battery_info()` check the ADB connection live each time they're called, so they don't require `connect()` to have been run first.
+
+**Connection and live checks:**
+- `is_connected()`, `get_android_version()`, `battery_info()`, `get_device_model()`, `get_device_ip()`, `wifi_status()`, `get_installed_apps()`, and `storage_space_info()` check the ADB connection live each time they're called, so they don't require `connect()` to have been run first.
+
+**Method details:**
 - `battery_info()` returns a dictionary parsed from `adb shell dumpsys battery`. Core fields (`level`, `status`, `health`, `voltage`, `temperature`, `technology`, and the `*_powered` flags) are consistently present across devices, but the full set of keys can vary by manufacturer, since some OEMs include additional proprietary fields.
+- `get_device_model()` returns the device model name.
+- `get_device_ip()` returns the device's local Wi-Fi IP address and raises `WifiNotConnectedError` if Wi-Fi is not connected.
+- `wifi_status()` returns `'On'`, `'Off'`, or `'Unknown'`.
+- `get_installed_apps()` returns a list of third-party package names installed on the device.
+- `storage_space_info()` returns a dictionary with filesystem usage information for the device's `/data` partition, with keys like `Filesystem`, `Size`, `Used`, `Available`, `Use%`, and `Mounted on`.
+- `reboot()` reboots the connected device.
 
 ## Errors
 
@@ -158,7 +175,7 @@ except DeviceNotFoundError:
 
 ## Roadmap
 
-Planned additions include WiFi status, installed app listing, and more device/system information. This package is under active development.
+This package is under active development. Future additions may include additional device diagnostics, performance profiling, and expanded gesture support.
 
 ## Author
 
