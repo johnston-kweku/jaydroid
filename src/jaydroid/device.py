@@ -1,5 +1,5 @@
 from .utils import adb
-from .exceptions import DeviceNotFoundError, DeviceNotConnectedError
+from .exceptions import DeviceNotFoundError, DeviceNotConnectedError, WifiNotConnectedError
 
 class Device:
     """
@@ -223,3 +223,34 @@ class Device:
             storage_dict = dict(zip(header, data))
             return storage_dict
         raise DeviceNotConnectedError('No device was detected. Connect an android and try again.')
+
+    def get_device_model(self):
+        """Return the device model name reported by the connected device.
+
+        Returns:
+            str: The device model name reported by ADB.
+
+        Raises:
+            DeviceNotConnectedError: If no device or emulator is connected.
+        """
+        if self.is_connected():
+            result = adb('shell', 'getprop', 'ro.product.model')
+            device_model = result.stdout.strip()
+            return device_model
+        raise DeviceNotConnectedError('No device was detected. Connect an android and try again.')
+
+    def get_device_ip(self):
+        if self.is_connected():
+            if self.wifi_status() == 'On':
+                result = adb('shell', 'ip', 'route')
+
+                lines = result.stdout
+                lines = lines.splitlines()
+                for line in lines:
+                    if 'wlan' in line:
+                        _, ip_addr = line.split(' src ')
+                        return ip_addr.strip()
+            raise WifiNotConnectedError('Wifi is not connected. Please connect wifi and try again.')
+        raise DeviceNotConnectedError('No device was detected. Connect an android and try again')
+
+    

@@ -6,3 +6,6 @@ class DeviceNotConnectedError(Exception):
 
 class AdbCommandError(Exception):
     pass
+
+class WifiNotConnectedError(Exception):
+    pass
