@@ -253,4 +253,14 @@ class Device:
             raise WifiNotConnectedError('Wifi is not connected. Please connect wifi and try again.')
         raise DeviceNotConnectedError('No device was detected. Connect an android and try again')
 
-    
+
+    def reboot(self):
+        """Reboot the connected device.
+
+        Raises:
+            DeviceNotConnectedError: If no device or emulator is connected.
+        """
+        if self.is_connected():
+            adb('reboot')
+            return
+        raise DeviceNotConnectedError('No device was detected. Connect an android and try again.')
