@@ -1,3 +1,4 @@
+import subprocess
 from .utils import adb
 
 class Button:
@@ -15,127 +16,127 @@ class Button:
     All methods return :class:`subprocess.CompletedProcess` to allow inspection
     of command output and return codes.
     """
-    def power(self, delay=0):
+    def power(self, delay: int | float = 0) -> subprocess.CompletedProcess[str]:
         """
         Toggle the device's screen with a power-button press.
 
         The screen is turned on when it is off and turned off when it is on.
 
-        Returns:
-            subprocess.CompletedProcess: The result of the ADB command.
-
         Args:
-            delay (int | float): Seconds to wait after the key event completes.
+            delay: Seconds to wait after the key event completes.
                 Defaults to ``0``.
+
+        Returns:
+            subprocess.CompletedProcess[str]: The result of the ADB command.
         """
 
         return adb('shell', 'input', 'keyevent', '26', delay=delay)
 
-    def volume_up(self, delay=0):
+    def volume_up(self, delay: int | float = 0) -> subprocess.CompletedProcess[str]:
         """
         Increase the device's system volume by one default increment.
 
-        Returns:
-            subprocess.CompletedProcess: The result of the ADB command.
-
         Args:
-            delay (int | float): Seconds to wait after the key event completes.
+            delay: Seconds to wait after the key event completes.
                 Defaults to ``0``.
+
+        Returns:
+            subprocess.CompletedProcess[str]: The result of the ADB command.
         """
         return adb('shell', 'input', 'keyevent', '24', delay=delay)
 
-    def volume_down(self, delay=0):
+    def volume_down(self, delay: int | float = 0) -> subprocess.CompletedProcess[str]:
         """
         Decrease the device's system volume by one default increment.
 
-        Returns:
-            subprocess.CompletedProcess: The result of the ADB command.
-
         Args:
-            delay (int | float): Seconds to wait after the key event completes.
+            delay: Seconds to wait after the key event completes.
                 Defaults to ``0``.
+
+        Returns:
+            subprocess.CompletedProcess[str]: The result of the ADB command.
         """
         return adb('shell', 'input', 'keyevent', '25', delay=delay)
 
-    def home(self, delay=0):
+    def home(self, delay: int | float = 0) -> subprocess.CompletedProcess[str]:
         """
         Navigate to the device home screen.
 
-        Returns:
-            subprocess.CompletedProcess: The result of the ADB command.
-
         Args:
-            delay (int | float): Seconds to wait after the key event completes.
+            delay: Seconds to wait after the key event completes.
                 Defaults to ``0``.
+
+        Returns:
+            subprocess.CompletedProcess[str]: The result of the ADB command.
         """
         return adb('shell', 'input', 'keyevent', '3', delay=delay)
 
-    def back(self, delay=0):
+    def back(self, delay: int | float = 0) -> subprocess.CompletedProcess[str]:
         """
         Navigate back one step in the current Android interface.
 
-        Returns:
-            subprocess.CompletedProcess: The result of the ADB command.
-
         Args:
-            delay (int | float): Seconds to wait after the key event completes.
+            delay: Seconds to wait after the key event completes.
                 Defaults to ``0``.
+
+        Returns:
+            subprocess.CompletedProcess[str]: The result of the ADB command.
         """
         return adb('shell', 'input', 'keyevent', '4', delay=delay)
     
-    def recent_apps(self, delay=0):
+    def recent_apps(self, delay: int | float = 0) -> subprocess.CompletedProcess[str]:
         """
         Open the Android recent-apps view.
 
-        Returns:
-            subprocess.CompletedProcess: The result of the ADB command.
-
         Args:
-            delay (int | float): Seconds to wait after the key event completes.
+            delay: Seconds to wait after the key event completes.
                 Defaults to ``0``.
+
+        Returns:
+            subprocess.CompletedProcess[str]: The result of the ADB command.
         """
         return adb('shell', 'input', 'keyevent', '187', delay=delay)
 
-    def menu(self, delay=0):
+    def menu(self, delay: int | float = 0) -> subprocess.CompletedProcess[str]:
         """
         Send the Android menu-button key event.
 
         The effect depends on the active application and Android version.
 
-        Returns:
-            subprocess.CompletedProcess: The result of the ADB command.
-
         Args:
-            delay (int | float): Seconds to wait after the key event completes.
+            delay: Seconds to wait after the key event completes.
                 Defaults to ``0``.
+
+        Returns:
+            subprocess.CompletedProcess[str]: The result of the ADB command.
         """
         return adb('shell', 'input', 'keyevent', '82', delay=delay)
 
-    def wake(self, delay=0):
+    def wake(self, delay: int | float = 0) -> subprocess.CompletedProcess[str]:
         """
         Wake the device's screen if it is off.
 
         This has no effect when the device is already awake.
 
-        Returns:
-            subprocess.CompletedProcess: The result of the ADB command.
-
         Args:
-            delay (int | float): Seconds to wait after the key event completes.
+            delay: Seconds to wait after the key event completes.
                 Defaults to ``0``.
+
+        Returns:
+            subprocess.CompletedProcess[str]: The result of the ADB command.
         """
         return adb('shell', 'input', 'keyevent', '224', delay=delay)
 
-    def sleep(self, delay=0):
+    def sleep(self, delay: int | float = 0) -> subprocess.CompletedProcess[str]:
         """
         Put the device's screen to sleep.
 
-        Returns:
-            subprocess.CompletedProcess: The result of the ADB command.
-
         Args:
-            delay (int | float): Seconds to wait after the key event completes.
+            delay: Seconds to wait after the key event completes.
                 Defaults to ``0``.
+
+        Returns:
+            subprocess.CompletedProcess[str]: The result of the ADB command.
         """
         return adb('shell', 'input', 'keyevent', '223', delay=delay)
 

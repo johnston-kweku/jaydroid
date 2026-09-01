@@ -1,3 +1,5 @@
+from typing import Optional
+
 from ..utils import adb
 from ..exceptions import DeviceNotFoundError, DeviceNotConnectedError
 from .apps import Apps
@@ -24,14 +26,14 @@ class Device:
     required but none is available.
     """
 
-    def __init__(self):
-        self._width = None
-        self._height = None
+    def __init__(self) -> None:
+        self._width: Optional[int] = None
+        self._height: Optional[int] = None
         self.apps = Apps(self)
         self.system = System(self)
         self.info = Info(self)
 
-    def connect(self):
+    def connect(self) -> None:
         """Connect to the first available ADB device and load its display size.
 
         Queries ADB for connected devices and retrieves the screen dimensions
@@ -51,7 +53,7 @@ class Device:
 
 
     @property
-    def width(self):
+    def width(self) -> int:
         """The connected device's display width in pixels.
 
         Returns:
@@ -66,7 +68,7 @@ class Device:
 
 
     @property
-    def height(self):
+    def height(self) -> int:
         """The connected device's display height in pixels.
 
         Returns:
@@ -81,7 +83,7 @@ class Device:
 
 
 
-    def setup(self):
+    def setup(self) -> None:
         """Refresh and store the device display width and height.
 
         Queries the device's current screen dimensions and updates internal
@@ -93,7 +95,7 @@ class Device:
         """
         self._width, self._height = self.get_screen_size()
 
-    def get_screen_size(self):
+    def get_screen_size(self) -> tuple[int, int]:
         """Return the physical display size as ``(width, height)``.
 
         Queries the device via ADB to get the current physical display
@@ -121,7 +123,7 @@ class Device:
         return int(width), int(height)
 
 
-    def is_connected(self):
+    def is_connected(self) -> bool:
         """Return whether an Android device or emulator is connected through ADB.
 
         Returns:
@@ -246,5 +248,5 @@ class Device:
         return self.info.get_device_model()
 
 
-    def launch_app(self, app_name):
-        return self.apps.launch_app(app_name)
+    def launch_app(self, package_name):
+        return self.apps.launch_app(package_name)

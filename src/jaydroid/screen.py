@@ -1,3 +1,6 @@
+import subprocess
+from typing import Optional
+
 from .utils import adb
 
 class Screen:
@@ -8,7 +11,7 @@ class Screen:
     ADB action completes. The default delay is ``0``.
     """
 
-    def capture(self, delay=0):
+    def capture(self, delay: int | float = 0) -> subprocess.CompletedProcess[str]:
         """
         Send the Android screenshot key event.
 
@@ -20,17 +23,17 @@ class Screen:
             skins than calling :meth:`screenshot` directly.
 
         Args:
-            delay (int | float): Seconds to wait after the capture completes.
+            delay: Seconds to wait after the capture completes.
                 Defaults to ``0``.
 
         Returns:
-            subprocess.CompletedProcess: The result of the ADB command.
+            subprocess.CompletedProcess[str]: The result of the ADB command.
         """
 
         return adb('shell', 'input', 'keyevent', '120', delay=delay)
 
 
-    def screenshot(self, filename=None, pull=False, delay=0):
+    def screenshot(self, filename: Optional[str] = None, pull: bool = False, delay: int | float = 0) -> subprocess.CompletedProcess[str]:
         """
         Save a screenshot on the connected device.
 
@@ -38,15 +41,15 @@ class Screen:
         capturing it.
 
         Args:
-            filename (str | None): Name of the image file on the device.
+            filename: Name of the image file on the device.
                 Defaults to ``'screenshot.png'``. The file is saved under ``/sdcard/``.
-            pull (bool): If ``True``, copy the screenshot to the current local
+            pull: If ``True``, copy the screenshot to the current local
                 directory after capturing. Defaults to ``False``.
-            delay (int | float): Seconds to wait after each ADB command.
+            delay: Seconds to wait after each ADB command.
                 Defaults to ``0``.
 
         Returns:
-            subprocess.CompletedProcess: The result of ``adb pull`` when ``pull``
+            subprocess.CompletedProcess[str]: The result of ``adb pull`` when ``pull``
                 is ``True``; otherwise, the result of the capture command.
         """
         if not filename:
@@ -62,7 +65,7 @@ class Screen:
         return res_capture
 
 
-    def screenrecord(self, filename=None, pull=False, duration=10, delay=0):
+    def screenrecord(self, filename: Optional[str] = None, pull: bool = False, duration: int | float = 10, delay: int | float = 0) -> subprocess.CompletedProcess[str] | str:
         """
         Record the device screen to an MP4 file.
 
@@ -70,17 +73,17 @@ class Screen:
         recording it.
 
         Args:
-            filename (str | None): Name of the video file on the device.
+            filename: Name of the video file on the device.
                 Defaults to ``'recording.mp4'``. The file is saved under ``/sdcard/``.
-            pull (bool): If ``True``, copy the recording to the current local
+            pull: If ``True``, copy the recording to the current local
                 directory after recording. Defaults to ``False``.
-            duration (int | float): Maximum recording duration in seconds.
+            duration: Maximum recording duration in seconds.
                 Defaults to ``10``.
-            delay (int | float): Seconds to wait after each ADB command.
+            delay: Seconds to wait after each ADB command.
                 Defaults to ``0``.
 
         Returns:
-            subprocess.CompletedProcess: The result of ``adb pull`` when ``pull``
+            subprocess.CompletedProcess[str]: The result of ``adb pull`` when ``pull``
                 is ``True``; otherwise, the result of the recording command.
             str: ``'File format unsupported.'`` when ``filename`` does not use
                 the ``.mp4`` extension.
