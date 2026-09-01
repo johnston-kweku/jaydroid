@@ -149,6 +149,10 @@ class Device:
         """
         return self.apps.get_installed_apps()
 
+
+    def get_system_apps(self):
+        return self.apps.get_system_apps()
+
     def battery_info(self):
         """Return battery information reported by the connected device.
 
@@ -240,3 +244,7 @@ class Device:
             DeviceNotConnectedError: If no device is connected.
         """
         return self.info.get_device_model()
+
+
+    def launch_app(self, app_name):
+        return self.apps.launch_app(app_name)

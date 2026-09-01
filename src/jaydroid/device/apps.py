@@ -27,14 +27,47 @@ class Apps:
             """
             if self._device.is_connected():
                 result = adb('shell', 'pm', 'list', 'packages', '-3')
-                app_list = result.stdout
-                packages = app_list.splitlines()
+                app_list = result.stdout.splitlines()
     
                 installed_apps = []
-                for package in packages:
+                for package in app_list:
                     _, app_name = package.split(':')
                     installed_apps.append(app_name)
     
                 return installed_apps
             raise DeviceNotConnectedError('No device was detected. Connect an android and try again.')
-    
+
+
+    def get_system_apps(self):
+        if self._device.is_connected():
+            result = adb('shell', 'pm', 'list', 'packages', '-s')
+
+            app_list = result.stdout.splitlines()
+            system_apps = []
+
+            for app in app_list:
+                _, app_name = app.split(':')
+                system_apps.append(app_name)
+
+            return system_apps
+        raise DeviceNotConnectedError('No device was detected, Connect to an android and try again.')
+
+
+
+
+
+
+    def launch_app(self, app_name:str):
+        if self._device.is_connected():
+            result = adb('shell', 'monkey', '-p', app_name, '-c', 'android.intent.category.LAUNCHER', '1')
+            lines = result.stdout.splitlines()
+
+            response = {}
+            for line in lines:
+                key, value = line.split(': ')
+                response[key] = value
+
+            return response
+        raise DeviceNotConnectedError('No device was detected. Connect an android and try again.')
+
+
