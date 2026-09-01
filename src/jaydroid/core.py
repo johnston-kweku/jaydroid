@@ -1,14 +1,16 @@
 r"""
-Utilities for sending Android Debug Bridge (ADB) input commands.
+Core module for Android Debug Bridge (ADB) interaction.
 
-The connected Android device must have developer options and USB debugging
-enabled. Most operations return the :class:`subprocess.CompletedProcess`
-instance produced by :func:`subprocess.run`, allowing callers to inspect the
-command's output and return code.
+Provides ready-to-use instances for device connection, button input, gestures,
+and screen operations. The connected Android device must have developer options
+and USB debugging enabled.
+
+Most operations return :class:`subprocess.CompletedProcess` instances from
+:func:`subprocess.run`, allowing callers to inspect command output and return codes.
 """
 
 
-from .device import Device
+from .device.device import Device
 from .gesture import Gesture
 from .button import Button
 from .screen import Screen
@@ -22,6 +24,7 @@ device = Device()
 button = Button()
 swipe = Gesture.Swipe(device=device)
 tap = Gesture.Tap(device=device)
+screen = Screen()
 
 
 

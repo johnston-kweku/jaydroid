@@ -4,11 +4,16 @@ class Button:
     """
     Methods for simulating common Android hardware and navigation buttons.
 
-    ADB must be installed and available on ``PATH``, and a device or emulator
-    must be connected before calling these methods.
+    Provides methods to send key events for hardware and navigation buttons
+    (power, volume, home, back, etc.). ADB must be installed and available
+    on ``PATH``, and a device or emulator must be connected before calling
+    these methods.
 
-    Each button method accepts ``delay`` in seconds and waits after its ADB
-    action completes. The default delay is ``0``.
+    All methods accept an optional ``delay`` parameter (in seconds) that
+    waits after the ADB action completes. The default delay is ``0``.
+
+    All methods return :class:`subprocess.CompletedProcess` to allow inspection
+    of command output and return codes.
     """
     def power(self, delay=0):
         """
