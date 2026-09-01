@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "jaydroid"
-version = "0.1.1"
+version = "0.2.0"
 description = "A beginner-friendly Python wrapper for simulating Android actions via ADB (tap, swipe, power on/off)."
 readme = "README.md"
 requires-python = ">=3.8"
