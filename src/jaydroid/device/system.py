@@ -1,5 +1,6 @@
 from ..utils import adb
 from ..exceptions import DeviceNotConnectedError, WifiNotConnectedError
+from typing import Dict
 
 class System:
     """System status and control operations for a connected Android device.
@@ -12,7 +13,7 @@ class System:
         """Initialize the System manager with a device reference."""
         self._device = device
 
-    def battery_info(self):
+    def battery_info(self) -> Dict[str, str]:
             """Return battery information reported by the connected device.
     
             Returns:
@@ -40,7 +41,7 @@ class System:
             raise DeviceNotConnectedError(error)
 
 
-    def wifi_status(self):
+    def wifi_status(self) -> str:
             """Return the Wi‑Fi state for the connected device.
     
             Queries Android settings via ADB and maps the numeric state to a human-
@@ -65,7 +66,7 @@ class System:
             raise DeviceNotConnectedError('No device was detected. Connect an android device and try again.')
             
 
-    def storage_space_info(self):
+    def storage_space_info(self) -> Dict[str, str]:
             """Return filesystem usage information for the device data partition.
     
             Calls ``df -h /data`` on the device and returns a dictionary mapping the
@@ -92,7 +93,7 @@ class System:
 
 
     
-    def get_device_ip(self):
+    def get_device_ip(self) -> str:
         """Return the device's local Wi-Fi IP address.
 
         Queries the device's routing table via ADB to extract the IP address
@@ -121,7 +122,7 @@ class System:
 
 
 
-    def reboot(self):
+    def reboot(self) -> None:
         """Reboot the connected device.
 
         Raises:

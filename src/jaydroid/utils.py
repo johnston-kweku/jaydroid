@@ -27,6 +27,7 @@ def adb(*args: str, **kwargs: Any) -> subprocess.CompletedProcess[str]:
         **kwargs
     )
 
+    
     if result.returncode != 0:
         raise AdbCommandError(result.stderr)
     time.sleep(delay_value)

@@ -16,3 +16,6 @@ class AdbCommandError(JaydroidError):
 class WifiNotConnectedError(JaydroidError):
     """Raised when an operation requires Wi-Fi connectivity but it is unavailable."""
     pass
+
+class PathDoesNotExistError(JaydroidError):
+    pass

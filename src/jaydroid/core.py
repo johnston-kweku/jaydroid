@@ -14,6 +14,7 @@ from .device.device import Device
 from .gesture import Gesture
 from .button import Button
 from .screen import Screen
+from .files import FileTransfer
 
 
 
@@ -25,6 +26,7 @@ button = Button()
 swipe = Gesture.Swipe(device=device)
 tap = Gesture.Tap(device=device)
 screen = Screen()
+files = FileTransfer(device=device)
 
 
 
