@@ -132,3 +132,15 @@ class System:
             adb('reboot')
             return
         raise DeviceNotConnectedError('No device was detected. Connect an android and try again.')
+
+
+    def get_device_activity(self):
+        if self._device.is_connected():
+            result = adb('shell', 'dumpsys', 'activity')
+            activity = result.stdout
+            with open('activity_snapshot.txt', 'w') as file:
+                file.write(activity)
+
+            return 
+
+        raise DeviceNotConnectedError('No device was detected. Connect an adnroid and try again.')

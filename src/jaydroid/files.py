@@ -56,3 +56,13 @@ class FileTransfer:
                 return transfer_meta
             raise PathDoesNotExistError('The path specified does not exists on this computer.')
         raise DeviceNotConnectedError('No device was detected. Please connect an android and try agian.')
+
+
+    def pull_file(self, from_path: str, to_path: str= '.') -> str:
+        if self._device.is_connected():
+            if os.path.exists(to_path):
+                result = adb('pull', from_path, to_path)
+                transfer_meta = result.stdout
+                return transfer_meta
+            raise PathDoesNotExistError('The path specified does not exist on this computer.')
+        raise DeviceNotConnectedError('No device was detected. Please connect and android and try again.')
