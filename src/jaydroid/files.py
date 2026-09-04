@@ -58,7 +58,25 @@ class FileTransfer:
         raise DeviceNotConnectedError('No device was detected. Please connect an android and try agian.')
 
 
-    def pull_file(self, from_path: str, to_path: str= '.') -> str:
+    def pull_file(self, from_path: str, to_path: str = '.') -> str:
+        """Pull a file from the connected Android device to the local computer.
+
+        Copies a file from the device's filesystem to the specified location
+        on the local computer via ADB.
+
+        Args:
+            from_path (str): Path to the file on the device (e.g. under /sdcard/).
+            to_path (str): Destination path on the local computer. Defaults to
+                the current directory.
+
+        Returns:
+            str: The raw transfer output reported by ADB.
+
+        Raises:
+            DeviceNotConnectedError: If no device or emulator is connected.
+            PathDoesNotExistError: If ``to_path`` does not exist on the
+                local computer.
+        """
         if self._device.is_connected():
             if os.path.exists(to_path):
                 result = adb('pull', from_path, to_path)
