@@ -250,3 +250,6 @@ class Device:
 
     def launch_app(self, package_name):
         return self.apps.launch_app(package_name)
+
+    def force_stop_app(self, package_name):
+        return self.apps.force_stop_app(package_name)
